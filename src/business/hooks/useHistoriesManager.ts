@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type {
-  NetworkClient,
-  Optional,
   History,
   HistoryCreateRequest,
   HistoryUpdateRequest,
+  NetworkClient,
+  Optional,
 } from '@sudobility/starter_types';
 import type { FirebaseIdToken } from '@sudobility/starter_client';
 import {
@@ -67,7 +67,12 @@ export const useHistoriesManager = ({
     isUpdating,
     isDeleting,
     error: mutationError,
-  } = useHistoryMutations(networkClient, baseUrl, userId ?? null, token ?? null);
+  } = useHistoryMutations(
+    networkClient,
+    baseUrl,
+    userId ?? null,
+    token ?? null
+  );
 
   const cacheEntry = useHistoriesStore(
     useCallback(state => (userId ? state.cache[userId] : undefined), [userId])
@@ -75,16 +80,16 @@ export const useHistoriesManager = ({
   const setHistories = useHistoriesStore(state => state.setHistories);
   const addHistoryToStore = useHistoriesStore(state => state.addHistory);
   const updateHistoryInStore = useHistoriesStore(state => state.updateHistory);
-  const removeHistoryFromStore = useHistoriesStore(state => state.removeHistory);
+  const removeHistoryFromStore = useHistoriesStore(
+    state => state.removeHistory
+  );
 
   const cachedHistories = cacheEntry?.histories;
   const cachedAt = cacheEntry?.cachedAt;
 
   const histories = useMemo(
     () =>
-      clientHistories.length > 0
-        ? clientHistories
-        : (cachedHistories ?? []),
+      clientHistories.length > 0 ? clientHistories : (cachedHistories ?? []),
     [clientHistories, cachedHistories]
   );
   const isCached =
