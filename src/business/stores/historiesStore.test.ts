@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useHistoriesStore } from './historiesStore';
 import type { History } from '@sudobility/starter_types';
 
@@ -15,6 +15,11 @@ const makeHistory = (overrides: Partial<History> = {}): History => ({
 describe('historiesStore', () => {
   beforeEach(() => {
     useHistoriesStore.getState().clearAll();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('setHistories', () => {
@@ -171,8 +176,138 @@ describe('historiesStore', () => {
           makeHistory({ id: 'hist-2', user_id: 'user-2' }),
         ]);
       useHistoriesStore.getState().clearAll();
-      expect(useHistoriesStore.getState().getHistories('user-1')).toBeUndefined();
-      expect(useHistoriesStore.getState().getHistories('user-2')).toBeUndefined();
+      expect(
+        useHistoriesStore.getState().getHistories('user-1')
+      ).toBeUndefined();
+      expect(
+        useHistoriesStore.getState().getHistories('user-2')
+      ).toBeUndefined();
+    });
+  });
+
+  describe('cache expiration', () => {
+    it('should return undefined for expired cache entry via getHistories', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      // Advance time past the default expiration (10 minutes)
+      vi.advanceTimersByTime(11 * 60 * 1000);
+
+      const result = useHistoriesStore.getState().getHistories('user-1');
+      expect(result).toBeUndefined();
+    });
+
+    it('should return undefined for expired cache entry via getCacheEntry', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      vi.advanceTimersByTime(11 * 60 * 1000);
+
+      const entry = useHistoriesStore.getState().getCacheEntry('user-1');
+      expect(entry).toBeUndefined();
+    });
+
+    it('should return data within the expiration window', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      // Advance time but stay within the 10 minute window
+      vi.advanceTimersByTime(5 * 60 * 1000);
+
+      const result = useHistoriesStore.getState().getHistories('user-1');
+      expect(result).toHaveLength(1);
+    });
+
+    it('should support custom maxAge for getHistories', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      // Advance 2 seconds
+      vi.advanceTimersByTime(2000);
+
+      // With 1-second maxAge, data should be expired
+      const expired = useHistoriesStore
+        .getState()
+        .getHistories('user-1', 1000);
+      expect(expired).toBeUndefined();
+
+      // With 5-second maxAge, data should still be valid
+      const valid = useHistoriesStore
+        .getState()
+        .getHistories('user-1', 5000);
+      expect(valid).toHaveLength(1);
+    });
+
+    it('should support custom maxAge for getCacheEntry', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      vi.advanceTimersByTime(2000);
+
+      const expired = useHistoriesStore
+        .getState()
+        .getCacheEntry('user-1', 1000);
+      expect(expired).toBeUndefined();
+
+      const valid = useHistoriesStore
+        .getState()
+        .getCacheEntry('user-1', 5000);
+      expect(valid).toBeDefined();
+    });
+  });
+
+  describe('purgeExpired', () => {
+    it('should remove expired entries and keep fresh ones', () => {
+      vi.useFakeTimers();
+
+      // Cache user-1 data
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      // Advance 6 minutes
+      vi.advanceTimersByTime(6 * 60 * 1000);
+
+      // Cache user-2 data (fresh)
+      useHistoriesStore
+        .getState()
+        .setHistories('user-2', [
+          makeHistory({ id: 'hist-2', user_id: 'user-2' }),
+        ]);
+
+      // Advance 5 more minutes (user-1 is now 11 min old, user-2 is 5 min old)
+      vi.advanceTimersByTime(5 * 60 * 1000);
+
+      // Purge with default 10 minute expiry
+      useHistoriesStore.getState().purgeExpired();
+
+      // user-1 should be purged (11 min old), user-2 should remain (5 min old)
+      expect(useHistoriesStore.getState().cache['user-1']).toBeUndefined();
+      expect(useHistoriesStore.getState().cache['user-2']).toBeDefined();
+    });
+
+    it('should support custom maxAge for purging', () => {
+      vi.useFakeTimers();
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+
+      vi.advanceTimersByTime(2000);
+
+      // Purge with 1 second maxAge
+      useHistoriesStore.getState().purgeExpired(1000);
+
+      expect(useHistoriesStore.getState().cache['user-1']).toBeUndefined();
+    });
+
+    it('should not remove anything when all entries are fresh', () => {
+      useHistoriesStore.getState().setHistories('user-1', [makeHistory()]);
+      useHistoriesStore
+        .getState()
+        .setHistories('user-2', [
+          makeHistory({ id: 'hist-2', user_id: 'user-2' }),
+        ]);
+
+      useHistoriesStore.getState().purgeExpired();
+
+      expect(useHistoriesStore.getState().cache['user-1']).toBeDefined();
+      expect(useHistoriesStore.getState().cache['user-2']).toBeDefined();
     });
   });
 });

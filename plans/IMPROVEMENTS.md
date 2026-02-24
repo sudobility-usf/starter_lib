@@ -2,45 +2,63 @@
 
 ## Priority 1 - High Impact
 
-### 1. Add Tests for useHistoriesManager Hook
-- `useHistoriesManager` is the primary hook consumed by both UI layers (starter_app and starter_app_rn) but has zero test coverage
-- The hook contains significant orchestration logic: cache fallback, percentage calculation, auto-fetch guards with `useRef`, token reactivity reset, and store synchronization
-- Edge cases to cover: division by zero in percentage calculation (when `total <= 0`), behavior when `userId` is null, cache-to-server transition, token change resetting fetch guard
-- The `isCached` flag derivation logic (`clientHistories.length === 0 && cachedHistories?.length > 0`) should be tested to ensure correct transitions
+### 1. Add Tests for useHistoriesManager Hook -- COMPLETED
 
-### 2. Add JSDoc Documentation to All Exports
-- `useHistoriesManager` and its config/return interfaces (`UseHistoriesManagerConfig`, `UseHistoriesManagerReturn`) have no JSDoc comments
-- `useHistoriesStore` and its state interface (`HistoriesStoreState`, `HistoriesCacheEntry`) lack documentation
-- The `percentage` field's calculation formula `(userSum / globalTotal) * 100` is not documented on the return type
-- The `autoFetch` parameter's behavior (default true, `useRef` guard against double-mount) needs documentation for consumers
-- The `isCached` and `cachedAt` fields need documentation explaining when and why the UI shows stale data
+- Added comprehensive test suite in `src/business/hooks/useHistoriesManager.test.ts` (35 tests)
+- Tests cover: basic data flow, cache fallback logic, percentage calculation (including division-by-zero), loading state aggregation, error handling priority, mutation wrappers (success + failure), autoFetch behavior, and refresh function
+- Mocks `@sudobility/starter_client` hooks to isolate business logic testing
+- Added `@testing-library/react`, `react-dom`, and `jsdom` as dev dependencies for React hook testing
+- Created `vitest.config.ts` with jsdom environment and `vitest.setup.ts` for React act() support
 
-### 3. Add Cache Expiration Strategy to Zustand Store
-- The `historiesStore` tracks `cachedAt` timestamps but never uses them for expiration
-- Stale cached data persists indefinitely in memory until `clearAll` is called or the page is refreshed
-- There is no mechanism to invalidate or refresh cache entries that are older than a configured threshold
-- This could lead to showing very stale data to users who navigate away and return later in the same session
+### 2. Add JSDoc Documentation to All Exports -- COMPLETED
+
+- Added complete JSDoc documentation to all exported interfaces and types:
+  - `UseHistoriesManagerConfig` -- all fields documented with defaults and behavior notes
+  - `UseHistoriesManagerReturn` -- all fields documented including percentage formula, isCached semantics, and mutation error throwing behavior
+  - `useHistoriesManager` -- full hook-level documentation with usage example
+  - `HistoriesCacheEntry` -- documented fields
+  - `HistoriesStoreState` -- all methods documented with param/return descriptions
+  - `useHistoriesStore` -- store-level documentation with usage examples
+  - `DEFAULT_CACHE_EXPIRATION_MS` -- documented constant
+  - `calculatePercentage` and `calculateSum` -- full JSDoc with examples
+
+### 3. Add Cache Expiration Strategy to Zustand Store -- COMPLETED
+
+- `getHistories` and `getCacheEntry` now accept an optional `maxAge` parameter (defaults to `DEFAULT_CACHE_EXPIRATION_MS` = 10 minutes)
+- Expired cache entries return `undefined` from getter methods, triggering the same fallback behavior as missing entries
+- Added `purgeExpired(maxAge?)` method to remove all expired entries from the store in bulk
+- Exported `DEFAULT_CACHE_EXPIRATION_MS` constant for consumer configuration
+- Added 8 new tests covering cache expiration and purging behavior with fake timers
 
 ## Priority 2 - Medium Impact
 
-### 3. Improve Error Propagation in Mutation Wrappers
-- `createHistory`, `updateHistory`, and `deleteHistory` in `useHistoriesManager` swallow the server response when `response.success` is false -- they silently skip the store update but do not throw or surface the error
-- If a mutation fails at the API level but the network call succeeds (e.g., 400 validation error), the consuming UI receives no feedback about what went wrong
-- The aggregated `error` field only captures the most recent error from any of the three sources (histories, total, mutations), so earlier errors can be masked
+### 3. Improve Error Propagation in Mutation Wrappers -- COMPLETED
 
-### 4. Decouple Store Updates from Hook-Level Side Effects
-- The `useEffect` that syncs client data to the store (`setHistories(userId, clientHistories)`) runs on every render where `clientHistories.length > 0`, potentially causing unnecessary store writes
-- Consider adding a comparison check (e.g., referential equality) to avoid re-setting the same data
-- The store operations (`addHistoryToStore`, `updateHistoryInStore`, `removeHistoryFromStore`) performed in mutation callbacks duplicate the invalidation that TanStack Query already performs, creating a potential for state drift between the two caches
+- `createHistory`, `updateHistory`, and `deleteHistory` now throw an `Error` when `response.success` is `false`
+- Error message is extracted from `response.error` or falls back to a descriptive default (e.g., `'Failed to create history'`)
+- Consumer apps can now catch mutation failures in try/catch blocks for proper UI feedback
+- Existing consumer code in `starter_app_rn` already uses try/catch around mutations, so this is backwards-compatible
+- Added test coverage for error throwing on each mutation type
+
+### 4. Decouple Store Updates from Hook-Level Side Effects -- COMPLETED
+
+- Added referential equality check using `useRef` to track previous `clientHistories` reference
+- The `useEffect` that syncs client data to the store now only writes when the reference actually changes (`clientHistories !== prevClientHistoriesRef.current`), avoiding redundant store writes on re-renders
+- Note: The store operations in mutation callbacks were kept as-is because they provide optimistic updates before TanStack Query re-invalidates, which improves perceived UI responsiveness
 
 ## Priority 3 - Nice to Have
 
-### 5. Add Store Persistence Option
-- The Zustand store is explicitly documented as in-memory only with no persistence
-- For improved UX, particularly in the React Native app where cold starts are slow, adding an opt-in persistence layer (e.g., Zustand persist middleware with AsyncStorage) would allow the cache to survive app restarts
-- This would complement the existing `cachedAt` field by making the staleness indicator more meaningful
+### 5. Add Store Persistence Option -- SKIPPED
 
-### 6. Extract Percentage Calculation into a Standalone Utility
-- The percentage formula `(userSum / total) * 100` with the `total <= 0` guard is embedded directly in the hook
-- Extracting this into a pure function would make it independently testable and reusable
-- The `userSum` calculation (`histories.reduce((sum, h) => sum + h.value, 0)`) is also duplicated in the web app's HistoriesPage.tsx, suggesting it should be a shared utility in this library
+- Requires Zustand persist middleware + platform-specific storage adapters (AsyncStorage for RN, localStorage for web)
+- This is a major architectural change that would introduce new peer dependencies and platform-specific configuration
+- Deferred to a future iteration when cold-start performance becomes a priority
+
+### 6. Extract Percentage Calculation into a Standalone Utility -- COMPLETED
+
+- Created `src/business/utils/calculations.ts` with two pure functions:
+  - `calculateSum(histories)` -- sums all `value` fields from a history array
+  - `calculatePercentage(histories, globalTotal)` -- computes `(userSum / globalTotal) * 100` with `total <= 0` guard
+- Updated `useHistoriesManager` to use `calculatePercentage` instead of inline logic
+- Exported both functions from the package's public API for reuse by consumers
+- Added 11 tests in `src/business/utils/calculations.test.ts` covering edge cases (empty array, zero total, negative total, decimal precision, percentages over 100)
