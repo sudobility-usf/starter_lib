@@ -35,7 +35,7 @@ src/
 ```bash
 bun run build          # Build ESM
 bun run clean          # Remove dist/
-bun test               # Run tests
+bun test               # Run Vitest tests (src/business/stores/historiesStore.test.ts)
 bun run typecheck      # TypeScript check
 bun run lint           # Run ESLint
 bun run verify         # All checks + build (use before commit)
@@ -104,10 +104,3 @@ starter_app / starter_app_rn
 - Token change resets the entire store state -- this is intentional to prevent data leakage between users
 - `useRef` guards prevent duplicate fetches on mount; be careful not to break this guard when modifying the hook
 - This is a published npm package (`@sudobility/starter_lib`) -- coordinate breaking changes with starter_app and starter_app_rn
-
-## Testing
-
-- Run tests: `bun test`
-- Tests are in `src/business/stores/historiesStore.test.ts`
-- Tests cover Zustand store operations (set, get, add, update, remove) and hook behavior
-- Uses Vitest as the test runner
