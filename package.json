@@ -1,6 +1,6 @@
 {
   "name": "@sudobility/starter_lib",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Business logic library for Starter with Zustand stores",
   "type": "module",
   "main": "dist/index.js",
@@ -35,16 +35,16 @@
   "author": "Sudobility",
   "license": "BUSL-1.1",
   "peerDependencies": {
-    "@sudobility/types": "^1.9.59",
+    "@sudobility/types": "^1.9.60",
     "@tanstack/react-query": ">=5.0.0",
     "react": ">=18.0.0",
     "zustand": ">=5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
-    "@sudobility/starter_client": "^0.0.15",
-    "@sudobility/starter_types": "^0.0.10",
-    "@sudobility/types": "^1.9.59",
+    "@sudobility/starter_client": "^0.0.16",
+    "@sudobility/starter_types": "^0.0.11",
+    "@sudobility/types": "^1.9.60",
     "@tanstack/react-query": "^5.90.5",
     "@testing-library/react": "^16.3.2",
     "@testing-library/react-hooks": "^8.0.1",
@@ -63,5 +63,9 @@
     "typescript": "~5.9.3",
     "vitest": "^4.0.15",
     "zustand": "^5.0.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sudobility-usf/starter_lib.git"
   }
 }
