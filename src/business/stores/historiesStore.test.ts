@@ -150,10 +150,7 @@ describe('historiesStore', () => {
     it('should remove history by id', () => {
       useHistoriesStore
         .getState()
-        .setHistories('user-1', [
-          makeHistory(),
-          makeHistory({ id: 'hist-2' }),
-        ]);
+        .setHistories('user-1', [makeHistory(), makeHistory({ id: 'hist-2' })]);
       useHistoriesStore.getState().removeHistory('user-1', 'hist-1');
       const result = useHistoriesStore.getState().getHistories('user-1');
       expect(result).toHaveLength(1);
@@ -226,15 +223,11 @@ describe('historiesStore', () => {
       vi.advanceTimersByTime(2000);
 
       // With 1-second maxAge, data should be expired
-      const expired = useHistoriesStore
-        .getState()
-        .getHistories('user-1', 1000);
+      const expired = useHistoriesStore.getState().getHistories('user-1', 1000);
       expect(expired).toBeUndefined();
 
       // With 5-second maxAge, data should still be valid
-      const valid = useHistoriesStore
-        .getState()
-        .getHistories('user-1', 5000);
+      const valid = useHistoriesStore.getState().getHistories('user-1', 5000);
       expect(valid).toHaveLength(1);
     });
 
@@ -249,9 +242,7 @@ describe('historiesStore', () => {
         .getCacheEntry('user-1', 1000);
       expect(expired).toBeUndefined();
 
-      const valid = useHistoriesStore
-        .getState()
-        .getCacheEntry('user-1', 5000);
+      const valid = useHistoriesStore.getState().getCacheEntry('user-1', 5000);
       expect(valid).toBeDefined();
     });
   });
