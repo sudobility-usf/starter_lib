@@ -53,13 +53,6 @@ const makeHistory = (overrides: Partial<History> = {}): History => ({
 });
 
 const defaultConfig: UseHistoriesManagerConfig = {
-  baseUrl: 'https://api.example.com',
-  networkClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
   userId: 'user-1',
   token: 'mock-token',
   autoFetch: false,
