@@ -52,7 +52,11 @@ const makeHistory = (overrides: Partial<History> = {}): History => ({
   ...overrides,
 });
 
+const mockNetworkClient = {} as import('@sudobility/types').NetworkClient;
+
 const defaultConfig: UseHistoriesManagerConfig = {
+  baseUrl: 'https://api.example.com',
+  networkClient: mockNetworkClient,
   userId: 'user-1',
   token: 'mock-token',
   autoFetch: false,

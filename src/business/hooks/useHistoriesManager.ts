@@ -5,6 +5,7 @@ import type {
   HistoryUpdateRequest,
   Optional,
 } from '@sudobility/starter_types';
+import type { NetworkClient } from '@sudobility/types';
 import type { FirebaseIdToken } from '@sudobility/starter_client';
 import { useHistories, useHistoriesTotal } from '@sudobility/starter_client';
 import { useHistoriesStore } from '../stores/historiesStore';
@@ -16,6 +17,8 @@ import { calculatePercentage } from '../utils/calculations';
  * @example
  * ```typescript
  * const config: UseHistoriesManagerConfig = {
+ *   baseUrl: 'https://api.example.com',
+ *   networkClient,
  *   userId: 'firebase-uid-123',
  *   token: 'eyJhbGciOiJSUzI1NiIs...',
  *   autoFetch: true,
@@ -23,6 +26,12 @@ import { calculatePercentage } from '../utils/calculations';
  * ```
  */
 export interface UseHistoriesManagerConfig {
+  /** Base URL of the Starter API. */
+  baseUrl: string;
+
+  /** Network client instance for making HTTP requests. */
+  networkClient: NetworkClient;
+
   /**
    * The Firebase UID of the authenticated user, or `null`/`undefined` when not logged in.
    * Cache is isolated per user -- switching users shows a fresh state.
@@ -178,6 +187,8 @@ export interface UseHistoriesManagerReturn {
  *     isCached,
  *     createHistory,
  *   } = useHistoriesManager({
+ *     baseUrl: 'https://api.example.com',
+ *     networkClient,
  *     userId: 'uid-123',
  *     token: 'eyJhbG...',
  *   });
@@ -196,6 +207,8 @@ export interface UseHistoriesManagerReturn {
  * ```
  */
 export const useHistoriesManager = ({
+  baseUrl,
+  networkClient,
   userId,
   token,
   autoFetch = true,
@@ -211,13 +224,13 @@ export const useHistoriesManager = ({
     isCreating,
     isUpdating,
     isDeleting,
-  } = useHistories(userId ?? null, token ?? null);
+  } = useHistories(networkClient, baseUrl, userId ?? null, token ?? null);
 
   const {
     total,
     isLoading: totalLoading,
     error: totalError,
-  } = useHistoriesTotal();
+  } = useHistoriesTotal(networkClient, baseUrl);
 
   const cacheEntry = useHistoriesStore(
     useCallback(state => (userId ? state.cache[userId] : undefined), [userId])
