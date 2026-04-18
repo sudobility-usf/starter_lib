@@ -6,7 +6,7 @@
       "name": "@sudobility/starter_lib",
       "devDependencies": {
         "@eslint/js": "^9.38.0",
-        "@sudobility/starter_client": "^0.0.19",
+        "@sudobility/starter_client": "^0.0.20",
         "@sudobility/starter_types": "^0.0.13",
         "@sudobility/types": "^1.9.61",
         "@tanstack/react-query": "^5.90.5",
@@ -145,7 +145,7 @@
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
-    "@sudobility/starter_client": ["@sudobility/starter_client@0.0.19", "", { "peerDependencies": { "@sudobility/types": "^1.9.61", "@tanstack/react-query": ">=5.0.0", "react": ">=18.0.0" } }, "sha512-WxTyKA+5QVbqx+l22SnRfcFwtfIL2TV+kqwi7iMluHjpyF9lds2ZtW3ifhq54JYoVl9yZQFnOiYm13GrqoXIvQ=="],
+    "@sudobility/starter_client": ["@sudobility/starter_client@0.0.20", "", { "peerDependencies": { "@sudobility/types": "^1.9.61", "@tanstack/react-query": ">=5.0.0", "react": ">=18.0.0" } }, "sha512-PyE9gwkJkPbgui+niCJuNsYYyHQ8VmRxUXb6w2NkJRfz3f3u9BhOsIqCEYZWulOEMFywReUqCDrvDQY8epRurA=="],
 
     "@sudobility/starter_types": ["@sudobility/starter_types@0.0.13", "", { "peerDependencies": { "@sudobility/types": "^1.9.61" } }, "sha512-jPGZZnYOfLIKefnSlHr3huXNT+lQvDmp/1QsOvP/Djlwl92t9Cg4wc8KOvSJuNtRQyhkdiWSP+5PbjeN576rHw=="],
 
